@@ -1,9 +1,9 @@
 #define cin _input_stream
 
 #ifdef _WIN32
-#define nextChar getchar
+	#define nextChar getchar
 #else
-#define nextChar getchar_unlocked
+	#define nextChar getchar_unlocked
 #endif
 
 class _istream_t {} _input_stream;

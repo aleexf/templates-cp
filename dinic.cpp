@@ -24,7 +24,6 @@ namespace flow {
             q.pop();
             for(int id:g[v]) {
                 int to = e[id].to;
-                //cout << v << ' ' << to << ' '  << d[v] << ' ' << d[to] << endl;
                 if (e[id].cap > e[id].flow && umin(d[to], d[v]+1)) {
                     q.push(to);
                 }
@@ -48,8 +47,7 @@ namespace flow {
     }
     ll dinic() {
         ll flow = 0;
-        while (true) {
-            if (!bfs()) break;
+        while (bfs()) {
             fill(ptr, ptr+n, 0);
             ll push = 0;
             do {
