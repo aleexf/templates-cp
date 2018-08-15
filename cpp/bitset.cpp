@@ -3,7 +3,39 @@ class Bitset {
 public:
     typedef uint64_t TData;
     typedef size_t TSize;
- 
+    
+    class TReference {
+        friend class Bitset;
+        public:
+            TReference(TData* dataPtr, TSize bitId):
+                dataPtr(dataPtr), bitId(bitId) {}
+            TReference(const TReference& other) {
+                this->operator=(static_cast<bool>(other));
+            }
+
+            operator bool() const {
+                return (*dataPtr >> bitId) & 1;
+            }
+            TReference& operator =(bool newBit) {
+                if (!newBit) {
+                    *dataPtr = *dataPtr & 
+                        (Bitset::FULL ^ (Bitset::ONE << bitId));
+                } else {
+                    *dataPtr = *dataPtr | (Bitset::ONE << bitId);
+                }
+            }
+            bool operator ~() const {
+                return ((*dataPtr >> bitId) & 1) ^ 1;
+            }
+            TReference& flip() {
+                *this = !static_cast<bool>(*this);
+                return *this;
+            }
+        private:
+            TSize bitId;
+            TData* dataPtr;
+    };
+
     Bitset() {
         n = div64(SIZE+63);
         data = new TData[n];
@@ -25,7 +57,7 @@ public:
     inline void set() {
         fill(data, data+n, FULL);
     }
-    inline void set(TData x) {
+    inline void set(TSize x) {
         data[div64(x)] |= (ONE << mod64(x));
     }
     inline void reset() {
@@ -33,6 +65,16 @@ public:
     }
     inline void reset(TSize x) {
         data[div64(x)] &= ~(ONE << mod64(x));
+    }
+
+    inline void flip() {
+        *this = this->operator~();
+    }
+    inline void flip(TSize x) {
+        data[div64(x)] ^= (ONE << mod64(x));
+    }
+    bool get(TSize x) const {
+        return (data[div64(x)] >> mod64(x)) & 1;
     }
  
     bool any() const {
@@ -73,14 +115,14 @@ public:
     TSize findFirst() {
         return (this->operator[](0) == 1 ? 0 : findNext(0));
     }
- 
-    bool operator [](TSize x) {
+
+    TReference operator [](TSize x) {
+        return TReference(&data[div64(x)], mod64(x));
+    }
+    bool operator [](TSize x) const {
         return (data[div64(x)] >> mod64(x)) & ONE;
     }
-    const bool& operator [](TSize x) const {
-        return (data[div64(x)] >> mod64(x)) & ONE;
-    }
- 
+
     bool operator <(const Bitset<SIZE>& other) {
         for(TSize i = 0; i < n; ++i) {
             if (other.data[i] != data[i]) {
@@ -202,6 +244,7 @@ public:
         os << s;
         return os;
     }
+
 private:
     static constexpr TSize BITS = 64;
  
@@ -212,13 +255,13 @@ private:
     TSize n;
     TData* data;
  
-    inline TData div64(TData x) {return (x >> 6);}
-    inline TData mod64(TData x) {return (x & 63);}
-    inline TData mul64(TData x) {return (x << 6);}
-    inline TData firstNBits(TData x, TSize y) {
+    static TData div64(TData x) {return (x >> 6);}
+    static TData mod64(TData x) {return (x & 63);}
+    static TData mul64(TData x) {return (x << 6);}
+    static TData firstNBits(TData x, TSize y) {
         return (x & (~(FULL << y)));
     }
-    inline TData lastNBits(TData x, TSize y) {
+    static TData lastNBits(TData x, TSize y) {
         return x & (FULL << (BITS - y));
     }
 };
