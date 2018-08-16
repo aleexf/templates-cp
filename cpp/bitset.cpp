@@ -3,26 +3,28 @@ class Bitset {
 public:
     typedef uint64_t TData;
     typedef size_t TSize;
-    
+
     class TReference {
         friend class Bitset;
         public:
             TReference(TData* dataPtr, TSize bitId):
                 dataPtr(dataPtr), bitId(bitId) {}
-            TReference(const TReference& other) {
-                this->operator=(static_cast<bool>(other));
-            }
 
             operator bool() const {
                 return (*dataPtr >> bitId) & 1;
             }
+            TReference& operator =(const TReference& other) {
+                this->operator=(static_cast<bool>(other));
+                return *this;
+            }
             TReference& operator =(bool newBit) {
                 if (!newBit) {
-                    *dataPtr = *dataPtr & 
+                    *dataPtr = *dataPtr &
                         (Bitset::FULL ^ (Bitset::ONE << bitId));
                 } else {
                     *dataPtr = *dataPtr | (Bitset::ONE << bitId);
                 }
+                return *this;
             }
             bool operator ~() const {
                 return ((*dataPtr >> bitId) & 1) ^ 1;
@@ -38,13 +40,11 @@ public:
 
     Bitset() {
         n = div64(SIZE+63);
-        data = new TData[n];
         fill(data, data+n, ZERO);
     }
- 
+
     Bitset(const string& s) {
         n = div64(SIZE+63);
-        data = new TData[n];
         fill(data, data+n, ZERO);
         TSize N = (s.length() > SIZE ? SIZE : s.length());
         for(TSize i = 0; i < N; ++i) {
@@ -53,7 +53,14 @@ public:
             }
         }
     }
- 
+
+    Bitset(const Bitset<SIZE>& other) {
+        this->n = other.n;
+        for(TSize i = 0; i < n; ++i) {
+            this->data[i] = other.data[i];
+        }
+    }
+
     inline void set() {
         fill(data, data+n, FULL);
     }
@@ -76,7 +83,7 @@ public:
     bool get(TSize x) const {
         return (data[div64(x)] >> mod64(x)) & 1;
     }
- 
+
     bool any() const {
         for(TSize i = 0; i < n; ++i) {
             if (data[i] != 0) return true;
@@ -90,7 +97,7 @@ public:
         return true;
     }
     bool none() const { return !any(); }
- 
+
     TSize size() const { return SIZE; }
     TSize count() const {
         TSize ret = 0;
@@ -100,7 +107,7 @@ public:
         return ret;
     }
     TSize findNext(TSize pos) {
-        int p = div64(pos);
+        TSize p = div64(pos);
         TData mask = lastNBits(data[p], BITS-mod64(pos)-1);
         if (mask != 0) {
             return mul64(p) + __builtin_ctzll(mask);
@@ -142,7 +149,7 @@ public:
     bool operator !=(const Bitset<SIZE>& other) {
         return !this->operator==(other);
     }
- 
+
     Bitset<SIZE> operator ~() const {
         Bitset<SIZE> ret;
         for(TSize i = 0; i < n; ++i) {
@@ -209,7 +216,7 @@ public:
         }
         return *this;
     }
- 
+
     Bitset<SIZE> operator <<(TSize shift) {
         return Bitset<SIZE>(*this) <<= shift;
     }
@@ -225,8 +232,8 @@ public:
     Bitset<SIZE> operator ^(const Bitset<SIZE>& other) {
         return Bitset<SIZE>(*this) ^= other;
     }
- 
-    string to_string() {
+
+    string to_string() const {
         string ret;
         for(TSize i = 0; i < SIZE; ++i) {
             ret += '0' + this->operator[](i);
@@ -239,7 +246,7 @@ public:
         x = Bitset<SIZE>(s);
         return is;
     }
-    friend ostream& operator <<(ostream& os, Bitset<SIZE>& x) {
+    friend ostream& operator <<(ostream& os, const Bitset<SIZE>& x) {
         string s = x.to_string();
         os << s;
         return os;
@@ -247,14 +254,14 @@ public:
 
 private:
     static constexpr TSize BITS = 64;
- 
+
     static constexpr TData ZERO = static_cast<TData>(0);
     static constexpr TData ONE = static_cast<TData>(1);
     static constexpr TData FULL = ~ZERO;
- 
+
     TSize n;
-    TData* data;
- 
+    TData data[(SIZE >> 6) + 2];
+
     static TData div64(TData x) {return (x >> 6);}
     static TData mod64(TData x) {return (x & 63);}
     static TData mul64(TData x) {return (x << 6);}
