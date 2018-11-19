@@ -16,7 +16,7 @@ void run_sieve() {
         if (!isprime[i]) continue;
         prime[iPrime++] = i;
         if (i * i > n) continue;
-        for(int j = i * i; j <= n; j += i) {
+        for(int j = i * i; j < SQRTMAX; j += i) {
             isprime[j] = false;
         }
     }
