@@ -6,12 +6,12 @@ public:
         if (st.empty()) {
             st.emplace_back(x, x);
         } else {
-            st.emplace_back(x, std::max(x, st.back().snd));
+            st.emplace_back(x, std::min(x, st.back().snd));
         }
     }
     void pop() { st.pop_back(); }
     T top() const { return st.back().fst; }
-    T max() const { return st.back().snd; }
+    T min() const { return st.back().snd; }
     size_t size() const { return st.size(); }
     bool empty() const { return st.empty(); }
 private:
@@ -32,12 +32,12 @@ public:
         }
         rem.pop();
     }
-    T max() const {
+    T min() const {
         if (!add.empty() && !rem.empty())
-            return std::max(add.max(), rem.max());
+            return std::min(add.min(), rem.min());
         if (!add.empty())
-            return add.max();
-        return rem.max();
+            return add.min();
+        return rem.min();
     }
     size_t size() const { return add.size() + rem.size(); }
     bool empty() const { return add.empty() && rem.empty(); }
