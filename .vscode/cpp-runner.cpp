@@ -61,6 +61,8 @@ int main(int argc, char** argv) {
     if (buildExitCode != 0) {
     	std::cerr << "Building failed with code " << buildExitCode << "(0x" << std::hex << buildExitCode << ")" << std::endl;
     	return 1;
+    } else {
+        std::cerr << " === Build completed successfully === " << std::endl;
     }
     auto startTime = std::chrono::high_resolution_clock::now();
     int runExitCode = run(filename_without_ext, running_args);

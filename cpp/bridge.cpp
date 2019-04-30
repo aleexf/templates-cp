@@ -6,7 +6,7 @@ namespace bridge {
         static int timer = 0;
         used[v] = true;
         in[v] = fup[v] = ++timer;
-        for(int to:g[v]) {
+        for(int to : g[v]) {
             if (to == p) continue;
             if (used[to]) umin(fup[v], in[to]);
             else {
@@ -17,6 +17,6 @@ namespace bridge {
         }
     }
     void find() {
-        rep(i, 0, n) if(!used[i]) dfs(i,-1);
+        rep(i, 0, n) if (!used[i]) dfs(i, -1);
     }
 }

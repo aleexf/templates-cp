@@ -3,7 +3,7 @@ namespace centriod {
     bool used[N];
     int dfs(int v, int p) {
         sz[v] = 1;
-        for(int to:g[v]) {
+        for(int to : g[v]) {
             if (to == p || used[to]) continue;
             sz[v] += dfs(to, v);
         }
@@ -14,7 +14,7 @@ namespace centriod {
         int N = sz[v], p = -1;
         while (run) {
             run = false;
-            for(int to:g[v]) {
+            for(int to : g[v]) {
                 if(to == p || used[to]) continue;
                 if (sz[to] > N/2) {
                     p = v;
@@ -31,6 +31,6 @@ namespace centriod {
         v = find(v);
         // solve here
         used[v] = true;
-        for(int to:g[v]) if (!used[to]) solve(to);
+        for(int to : g[v]) if (!used[to]) solve(to);
     }
 }
