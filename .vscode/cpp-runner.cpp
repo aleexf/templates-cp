@@ -8,7 +8,7 @@
 #include <string>
 #include <chrono>
 
-inline bool is_exists(const std::string& filename) {
+inline bool isExists(const std::string& filename) {
     struct stat buffer;
     return (stat(filename.c_str(), &buffer) == 0);
 }
@@ -21,14 +21,13 @@ inline int execute(const char* command) {
 }
 
 int build(const std::string& filename, const std::string& filename_woext, const std::string& args) {
-    std::string fileWithoutExt = filename;
-    
     struct stat source, binary;
     stat(filename.c_str(), &source);
     bool exists = (stat(filename_woext.c_str(), &binary) == 0);
     if (exists && source.st_mtime <= binary.st_ctime) {
         return 0;
     }
+    std::cerr << " === Building... === " << std::endl;
     std::string command = "g++ " + args + ' ' + filename;
     return execute(command.c_str());
 }
@@ -38,38 +37,58 @@ int run(const std::string& filename, const std::string& args) {
     return execute(command.c_str());
 }
 
+std::string cutExtension(const std::string& filename) {
+    std::string without_ext = filename; 
+    while (!without_ext.empty() && without_ext.back() != '.') {
+        without_ext.pop_back();
+    }
+    if (!without_ext.empty()) {
+        without_ext.pop_back();
+    }
+    return (!without_ext.empty() ? without_ext : filename);
+}
+
+std::string makeExecutable(const std::string& file) {
+    if (file[0] == '/' || (file.size() > 1 && file[0] == '.' && file[1] == '/')) {
+        return file;
+    }
+    return "./" + file;
+}
+
 int main(int argc, char** argv) {
     if (argc < 3) {
         std::cerr << "Usage: cpp-runner <filename> '<building-arguments>' '<running-arguments>'" << std::endl;
         return 0;
     }
+
     std::string filename = static_cast<std::string>(argv[1]);
-    if (!is_exists(filename)) {
+    if (!isExists(filename)) {
     	std::cerr << "File " << filename << " does not exists" << std::endl;
     	return 1;
     }
 
     std::string build_args = static_cast<std::string>(argv[2]);
     std::string running_args = static_cast<std::string>(argv[3]);
-    std::string filename_without_ext = filename;
-    while (filename_without_ext.back() != '.') {
-        filename_without_ext.pop_back();
-    }
-    filename_without_ext.pop_back();
+    
+    std::string without_ext = cutExtension(filename);
 
-    int buildExitCode = build(filename, filename_without_ext, build_args);
-    if (buildExitCode != 0) {
-    	std::cerr << "Building failed with code " << buildExitCode << "(0x" << std::hex << buildExitCode << ")" << std::endl;
+    int build_exit_code = build(filename, without_ext, build_args);
+    if (build_exit_code != 0) {
+    	std::cerr << "Building failed with code " << build_exit_code << "(0x" << std::hex << build_exit_code
+    	    << ")" << std::endl;
     	return 1;
     } else {
         std::cerr << " === Build completed successfully === " << std::endl;
     }
-    auto startTime = std::chrono::high_resolution_clock::now();
-    int runExitCode = run(filename_without_ext, running_args);
-    auto endTime = std::chrono::high_resolution_clock::now();
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+    int run_exit_code = run(makeExecutable(without_ext), running_args);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    
     std::cerr << std::endl;
-    std::cerr << std::endl << "Process returned " << runExitCode << "(0x" << std::hex << runExitCode << "). "
-        << "Execution time: " << std::dec << std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count() / 1000.0
+    std::cerr << std::endl << "Process returned " << run_exit_code << "(0x" << std::hex << run_exit_code << "). "
+        << "Execution time: " << std::dec 
+        << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() / 1000.0
         << " s" << std::endl;
 
     return 0;
